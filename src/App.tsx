@@ -8,6 +8,8 @@ import type { Attendee, MeetingRow } from './lib/types';
 import { computeKpis } from './lib/kpi';
 import { Skull } from 'lucide-react';
 
+type EditPayload = { title: string; duration: number; attendees: Attendee[] };
+
 type Tab = 'calendar' | 'dashboard';
 
 export default function App() {
@@ -45,9 +47,14 @@ export default function App() {
     setShowInterceptor(true);
   }
 
+  function openInterceptorWithPayload({ title, duration: _d, attendees }: EditPayload) {
+    setInitialTitle(title);
+    setPrefillAttendees(attendees);
+    setShowInterceptor(true);
+  }
+
   function openInterceptorForRow(row: MeetingRow) {
     setInitialTitle(row.title);
-    // Reconstruct minimal attendees from the row so the interceptor has something to work with
     const count = row.attendees_proposed;
     const synthetic: Attendee[] = Array.from({ length: count }, (_, i) => ({
       name: `Attendee ${i + 1}`,
@@ -106,6 +113,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
             <Calendar
               onNew={() => openInterceptor('Untitled meeting')}
+              onEdit={openInterceptorWithPayload}
               rows={rows}
               onEditRow={openInterceptorForRow}
             />
