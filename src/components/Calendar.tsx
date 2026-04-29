@@ -24,13 +24,25 @@ const STATIC_EVENTS: StaticEvent[] = [
   { day: 4, start: 9,  len: 1, title: 'Team standup',   type: 'dead',  duration: 30, attendees: TEAM.slice(0, 6) },
 ];
 
-function assignSlot(_row: MeetingRow, index: number): { day: number; start: number } {
-  const day = index % 5;
-  const hourOptions = HOURS.filter(
-    (h) => !STATIC_EVENTS.some((e) => e.day === day && e.start === h)
-  );
-  const start = hourOptions[index % hourOptions.length] ?? 10;
-  return { day, start };
+function assignSlot(
+  _row: MeetingRow,
+  index: number,
+  taken: Set<string>,
+): { day: number; start: number } | null {
+  // Walk every (day, hour) cell in order and pick the Nth free one.
+  // A cell is free if it's not occupied by a static event or a previously
+  // placed saved row. This guarantees new meetings are always visible.
+  let free = -1;
+  for (let day = 0; day < 5; day++) {
+    for (const h of HOURS) {
+      const key = `${day}-${h}`;
+      const usedByStatic = STATIC_EVENTS.some((e) => e.day === day && e.start === h);
+      if (usedByStatic || taken.has(key)) continue;
+      free += 1;
+      if (free === index) return { day, start: h };
+    }
+  }
+  return null;
 }
 
 type EditPayload = { title: string; duration: number; attendees: Attendee[] };
@@ -44,10 +56,21 @@ type Props = {
 
 export function Calendar({ onNew, onEdit, rows = [], onEditRow }: Props) {
   const slotMap = new Map<string, MeetingRow>();
-  rows.slice(0, 8).forEach((row, i) => {
-    const { day, start } = assignSlot(row, i);
-    const key = `${day}-${start}`;
-    if (!slotMap.has(key)) slotMap.set(key, row);
+  // Only show meetings that actually resulted in a calendar event: every
+  // verdict except an accepted kill/async (which means the user agreed to
+  // drop the meeting entirely).
+  const visibleRows = rows.filter(
+    (r) => !(r.accepted && (r.verdict === 'kill' || r.verdict === 'async'))
+  );
+  // Newest first so the most recently created meeting always lands in the
+  // earliest free slot and is immediately visible at the top-left.
+  const taken = new Set<string>();
+  visibleRows.slice(0, 20).forEach((row, i) => {
+    const slot = assignSlot(row, i, taken);
+    if (!slot) return;
+    const key = `${slot.day}-${slot.start}`;
+    taken.add(key);
+    slotMap.set(key, row);
   });
 
   return (

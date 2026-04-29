@@ -159,7 +159,13 @@ export default function App() {
             }
             setShowInterceptor(false);
             await loadData();
-            setTab('dashboard');
+            // Stay on the calendar so the user can see their new event. Only
+            // jump to Impact when the meeting was killed outright (no event
+            // created, so there's nothing to see on the calendar).
+            const wasKilled =
+              accepted && (rec.verdict === 'kill' || rec.verdict === 'async');
+            if (wasKilled) setTab('dashboard');
+            else setTab('calendar');
           }}
         />
       )}
