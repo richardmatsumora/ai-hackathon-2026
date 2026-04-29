@@ -180,7 +180,7 @@ export default function App() {
               rows={rows}
               onEditRow={openInterceptorForRow}
             />
-            <SidePanel kpis={sessionKpis} onCreate={() => openInterceptor('')} />
+            <SidePanel kpis={sessionKpis} />
           </div>
         ) : (
           <Dashboard kpis={allKpis} rows={allRows} sessionKpis={sessionKpis} />
@@ -539,9 +539,8 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
   );
 }
 
-function SidePanel({ kpis, onCreate }: {
+function SidePanel({ kpis }: {
   kpis: { avoided: number; attendeeHoursSaved: number; costSaved: number; mps: number };
-  onCreate: () => void;
 }) {
   return (
     <aside className="space-y-4">
@@ -558,13 +557,6 @@ function SidePanel({ kpis, onCreate }: {
         <p className="font-sans text-sm mt-3 leading-relaxed" style={{ color: '#99907b' }}>
           We intercept before it hits calendars, interrogate with two questions, then kill, trim, or approve.
         </p>
-        <button
-          onClick={onCreate}
-          className="btn-stamp mt-4 w-full font-display font-black text-sm py-2.5"
-          style={{ background: '#f2c94c', color: '#000', border: '2px solid #000', boxShadow: '4px 4px 0px #000', letterSpacing: '-0.01em' }}
-        >
-          INTERROGATE A MEETING
-        </button>
       </div>
 
       <div style={{ background: '#1f1b13', border: '1px solid #4d4635' }}>
