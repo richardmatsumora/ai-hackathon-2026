@@ -5,7 +5,7 @@ import { TEAM } from '../lib/seed';
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
 const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
 
-type StaticEvent = {
+export type StaticEvent = {
   day: number;
   start: number;
   len: number;
@@ -15,7 +15,7 @@ type StaticEvent = {
   duration: number;
 };
 
-const STATIC_EVENTS: StaticEvent[] = [
+export const STATIC_EVENTS: StaticEvent[] = [
   { day: 0, start: 9,  len: 1, title: 'Team standup',   type: 'dead',  duration: 30, attendees: TEAM.slice(0, 6) },
   { day: 0, start: 11, len: 1, title: '1:1 with Priya', type: 'alive', duration: 30, attendees: TEAM.slice(0, 2) },
   { day: 1, start: 10, len: 2, title: 'Roadmap review', type: 'alive', duration: 60, attendees: TEAM.slice(0, 5) },

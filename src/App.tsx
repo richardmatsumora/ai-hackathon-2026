@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Calendar } from './components/Calendar';
+import { useEffect, useRef, useState } from 'react';
+import { Calendar, STATIC_EVENTS } from './components/Calendar';
 import { Dashboard } from './components/Dashboard';
 import { Interceptor } from './components/Interceptor';
 import { Logo } from './components/Logo';
 import { getSessionId, supabase } from './lib/supabase';
 import type { Attendee, MeetingRow } from './lib/types';
 import { computeKpis } from './lib/kpi';
-import { Skull } from 'lucide-react';
+import { ChevronDown, Skull } from 'lucide-react';
 
 type EditPayload = { title: string; duration: number; attendees: Attendee[] };
 type Tab = 'calendar' | 'dashboard';
@@ -93,13 +93,11 @@ export default function App() {
             <div style={{ width: 1, background: '#4d4635', alignSelf: 'stretch' }} />
             <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>IMPACT</TabBtn>
           </nav>
-          <button
-            onClick={() => openInterceptor('')}
-            className="btn-stamp inline-flex items-center gap-2 font-display font-black text-sm px-4 py-2.5"
-            style={{ background: '#eb5757', color: '#000', border: '2px solid #000', boxShadow: '4px 4px 0px #000', letterSpacing: '-0.01em' }}
-          >
-            <Skull className="w-4 h-4" strokeWidth={3} /> KILL A MEETING
-          </button>
+          <KillMeetingPicker
+            savedRows={rows.filter((r) => !(r.accepted && (r.verdict === 'kill' || r.verdict === 'async')))}
+            onPickRow={openInterceptorForRow}
+            onPickStatic={(ev) => openInterceptorWithPayload({ title: ev.title, duration: ev.duration, attendees: ev.attendees })}
+          />
         </div>
       </header>
 
@@ -213,6 +211,129 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+function formatHour(h: number) {
+  return h > 12 ? `${h - 12}pm` : h === 12 ? '12pm' : `${h}am`;
+}
+
+function KillMeetingPicker({
+  savedRows,
+  onPickRow,
+  onPickStatic,
+}: {
+  savedRows: MeetingRow[];
+  onPickRow: (row: MeetingRow) => void;
+  onPickStatic: (ev: typeof STATIC_EVENTS[number]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [open]);
+
+  const aliveStatic = STATIC_EVENTS.filter((e) => e.type === 'alive');
+  const hasAny = savedRows.length > 0 || aliveStatic.length > 0;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="btn-stamp inline-flex items-center gap-2 font-display font-black text-sm px-4 py-2.5"
+        style={{ background: '#eb5757', color: '#000', border: '2px solid #000', boxShadow: '4px 4px 0px #000', letterSpacing: '-0.01em' }}
+      >
+        <Skull className="w-4 h-4" strokeWidth={3} /> KILL A MEETING
+        <ChevronDown className="w-4 h-4" strokeWidth={3} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 mt-2 w-[340px] z-30 fade-in"
+          style={{ background: '#1f1b13', border: '2px solid #000', boxShadow: '4px 4px 0px #000' }}
+        >
+          <div style={{ position: 'absolute', top: 0, left: 0, width: 48, height: 3, background: '#eb5757' }} />
+          <div
+            className="px-4 py-2.5 font-sans font-medium text-[10px] tracking-[0.2em] uppercase"
+            style={{ color: '#99907b', borderBottom: '1px solid #4d4635', background: '#231f17' }}
+          >
+            Pick a suspect from the calendar
+          </div>
+
+          <div className="max-h-[360px] overflow-y-auto">
+            {!hasAny && (
+              <div className="px-4 py-6 text-center font-sans text-xs" style={{ color: '#4d4635' }}>
+                No meetings on your calendar yet.
+              </div>
+            )}
+
+            {savedRows.length > 0 && (
+              <div>
+                <SectionLabel>Your meetings</SectionLabel>
+                {savedRows.map((r) => (
+                  <PickerRow
+                    key={r.id}
+                    title={r.title || 'Untitled'}
+                    sub={`${r.duration_minutes}m · ${r.attendees_proposed} attendees · ${r.goal}`}
+                    onClick={() => { setOpen(false); onPickRow(r); }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {aliveStatic.length > 0 && (
+              <div>
+                <SectionLabel>This week's calendar</SectionLabel>
+                {aliveStatic.map((ev) => (
+                  <PickerRow
+                    key={`${ev.day}-${ev.start}-${ev.title}`}
+                    title={ev.title}
+                    sub={`${DAY_NAMES[ev.day]} ${formatHour(ev.start)} · ${ev.duration}m · ${ev.attendees.length} attendees`}
+                    onClick={() => { setOpen(false); onPickStatic(ev); }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="px-4 pt-3 pb-1.5 font-sans font-medium text-[10px] tracking-[0.18em] uppercase"
+      style={{ color: '#4d4635' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PickerRow({ title, sub, onClick }: { title: string; sub: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left px-4 py-2.5 flex items-start gap-3 transition"
+      style={{ borderTop: '1px solid #2d2a21', background: 'transparent' }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = '#231f17'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+    >
+      <Skull className="w-3.5 h-3.5 mt-0.5 shrink-0" style={{ color: '#eb5757' }} />
+      <div className="min-w-0">
+        <div className="font-sans font-medium text-sm truncate" style={{ color: '#eae1d4' }}>{title}</div>
+        <div className="font-sans text-[11px] mt-0.5 truncate" style={{ color: '#99907b' }}>{sub}</div>
+      </div>
+    </button>
   );
 }
 
