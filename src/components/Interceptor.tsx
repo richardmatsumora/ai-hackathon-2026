@@ -8,6 +8,7 @@ import { Logo } from './Logo';
 type Props = {
   initialTitle: string;
   initialAttendees?: Attendee[];
+  mode?: 'create' | 'interrogate';
   onClose: () => void;
   onCommit: (payload: {
     draft: MeetingDraft;
@@ -24,7 +25,7 @@ const ROLE_SUGGESTIONS = [
   'Sales Lead', 'Operations Manager',
 ];
 
-export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit }: Props) {
+export function Interceptor({ initialTitle, initialAttendees, mode = 'interrogate', onClose, onCommit }: Props) {
   const [step, setStep] = useState<'brief' | 'questions' | 'verdict'>('brief');
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(45);
@@ -256,7 +257,7 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
                   letterSpacing: '-0.01em',
                 }}
               >
-                INTERROGATE <ArrowRight className="w-4 h-4" strokeWidth={3} />
+                {mode === 'create' ? 'NEXT STEP' : 'INTERROGATE'} <ArrowRight className="w-4 h-4" strokeWidth={3} />
               </button>
             </div>
           </div>

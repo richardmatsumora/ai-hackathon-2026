@@ -26,6 +26,7 @@ export default function App() {
   const [showInterceptor, setShowInterceptor] = useState(false);
   const [initialTitle, setInitialTitle] = useState('');
   const [prefillAttendees, setPrefillAttendees] = useState<Attendee[] | undefined>(undefined);
+  const [interceptorMode, setInterceptorMode] = useState<'create' | 'interrogate'>('interrogate');
   // rows = only this session's meetings (for calendar display)
   const [rows, setRows] = useState<MeetingRow[]>([]);
   // allRows = demo-seed + this session (for KPIs on Impact tab)
@@ -119,12 +120,14 @@ export default function App() {
   function openInterceptor(suggestedTitle = '') {
     setInitialTitle(suggestedTitle);
     setPrefillAttendees(undefined);
+    setInterceptorMode('create');
     setShowInterceptor(true);
   }
 
   function openInterceptorWithPayload({ title, duration: _d, attendees }: EditPayload) {
     setInitialTitle(title);
     setPrefillAttendees(attendees);
+    setInterceptorMode('interrogate');
     setShowInterceptor(true);
   }
 
@@ -139,6 +142,7 @@ export default function App() {
       reason: '',
     }));
     setPrefillAttendees(synthetic);
+    setInterceptorMode('interrogate');
     setShowInterceptor(true);
   }
 
@@ -204,6 +208,7 @@ export default function App() {
         <Interceptor
           initialTitle={initialTitle}
           initialAttendees={prefillAttendees}
+          mode={interceptorMode}
           onClose={() => setShowInterceptor(false)}
           onCommit={async ({ draft, answers, rec, accepted }) => {
             const attendeesRec =
