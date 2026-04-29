@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Meet is Murder — Smart Meeting",
+  "version": "1.0.0",
+  "description": "Interrogate every meeting before it hits Google Calendar. Kill the ones that shouldn't exist.",
+
+  "permissions": [
+    "storage",
+    "identity",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://calendar.google.com/*",
+    "https://www.googleapis.com/*"
+  ],
+
+  "oauth2": {
+    "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/calendar.events"
+    ]
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://calendar.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "action": {
+    "default_title": "Meet is Murder",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

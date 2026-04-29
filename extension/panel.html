@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meet is Murder — Smart Meeting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800;900&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ─── Header ─── -->
+  <header class="panel-header">
+    <div class="logo">
+      <div class="logo-badge">
+        <div class="logo-stripes"></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f2c94c" stroke-width="2" stroke-linecap="square">
+          <rect x="3" y="4" width="18" height="17"/>
+          <path d="M8 2v4M16 2v4M3 9h18"/>
+          <path d="M8 13h2M14 13h2" stroke="#eb5757" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">MEET IS <span class="text-red">MURDER</span></div>
+        <div class="logo-sub">Every meeting is guilty</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── Step bar ─── -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-item active" data-step="brief">1. Brief</div>
+    <div class="step-item" data-step="questions">2. Interrogate</div>
+    <div class="step-item" data-step="verdict">3. Verdict</div>
+  </div>
+
+  <!-- ─── Main content ─── -->
+  <main id="panelMain"></main>
+
+  <!-- ─── Toast ─── -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <script src="api.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>
