@@ -11,7 +11,7 @@ import { Skull } from 'lucide-react';
 type EditPayload = { title: string; duration: number; attendees: Attendee[] };
 type Tab = 'calendar' | 'dashboard';
 
-const DEMO_SESSION = 'demo-seed';
+const DEMO_SESSIONS = ['demo-seed', 'demo-seed-v2'];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('calendar');
@@ -30,9 +30,9 @@ export default function App() {
     const [{ data: sessionMeetings }, { data: demoMeetings }, { data: sf }, { data: af }] =
       await Promise.all([
         supabase.from('meetings').select('*').eq('session_id', sessionId).order('created_at', { ascending: false }),
-        supabase.from('meetings').select('*').eq('session_id', DEMO_SESSION).order('created_at', { ascending: false }),
+        supabase.from('meetings').select('*').in('session_id', DEMO_SESSIONS).order('created_at', { ascending: false }),
         supabase.from('feedback').select('score').eq('session_id', sessionId),
-        supabase.from('feedback').select('score').in('session_id', [sessionId, DEMO_SESSION]),
+        supabase.from('feedback').select('score').in('session_id', [sessionId, ...DEMO_SESSIONS]),
       ]);
 
     const myRows = (sessionMeetings as MeetingRow[]) || [];
