@@ -8,10 +8,8 @@ import type { Attendee, MeetingRow } from './lib/types';
 import { computeKpis } from './lib/kpi';
 import { CalendarDays, ChevronDown, Loader as Loader2, Skull } from 'lucide-react';
 import {
-  beginOAuth,
   consumeOAuthRedirect,
   disconnect as gcalDisconnect,
-  hasGoogleClientId,
   importGoogleCalendarEvents,
   isConnected as gcalIsConnected,
 } from './lib/google';
@@ -60,6 +58,7 @@ export default function App() {
 
   const [gcalConnected, setGcalConnected] = useState<boolean>(gcalIsConnected());
   const [gcalBusy, setGcalBusy] = useState(false);
+  const [gcalConfirmOpen, setGcalConfirmOpen] = useState(false);
 
   useEffect(() => {
     const cb = consumeOAuthRedirect();
@@ -93,17 +92,16 @@ export default function App() {
   }
 
   function handleGcalClick() {
-    if (!hasGoogleClientId()) {
-      flash('err', 'Add VITE_GOOGLE_CLIENT_ID to .env to enable Google Calendar sync.');
-      return;
-    }
     if (gcalConnected) {
       runImport();
-    } else {
-      try { beginOAuth(); } catch (e: unknown) {
-        flash('err', e instanceof Error ? e.message : 'OAuth start failed');
-      }
+      return;
     }
+    setGcalConfirmOpen(true);
+  }
+
+  function handleGcalConfirm() {
+    setGcalConfirmOpen(false);
+    window.location.href = 'https://mail.google.com/mail/u/0/#inbox';
   }
 
   function handleGcalDisconnect() {
@@ -201,6 +199,68 @@ export default function App() {
           }}
         >
           {toast.msg}
+        </div>
+      )}
+
+      {gcalConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)' }}
+          onClick={() => setGcalConfirmOpen(false)}
+        >
+          <div
+            className="max-w-md w-full fade-in"
+            style={{ background: '#16130b', border: '2px solid #000', boxShadow: '6px 6px 0 #000' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-1.5 caution-tape" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-3">
+                <CalendarDays className="w-6 h-6" strokeWidth={3} style={{ color: '#2d9cdb' }} />
+                <div
+                  className="font-display font-black text-xl"
+                  style={{ color: '#eae1d4', letterSpacing: '-0.02em' }}
+                >
+                  CONNECT GOOGLE CALENDAR
+                </div>
+              </div>
+              <p
+                className="font-sans text-sm leading-relaxed mb-5"
+                style={{ color: '#c8bfa8' }}
+              >
+                You&apos;re about to connect your Google Calendar. You&apos;ll be redirected to an
+                authorization screen to grant Meet is Murder permission to read your events.
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setGcalConfirmOpen(false)}
+                  className="font-display font-black text-xs px-4 py-2.5"
+                  style={{
+                    background: 'transparent',
+                    color: '#99907b',
+                    border: '2px solid #4d4635',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleGcalConfirm}
+                  className="btn-stamp inline-flex items-center gap-2 font-display font-black text-xs px-4 py-2.5"
+                  style={{
+                    background: '#2d9cdb',
+                    color: '#000',
+                    border: '2px solid #000',
+                    boxShadow: '3px 3px 0 #000',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" strokeWidth={3} />
+                  CONTINUE TO GOOGLE
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
