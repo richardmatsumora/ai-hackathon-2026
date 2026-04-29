@@ -3,41 +3,106 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
 }
 
 body {
-  @apply bg-bone text-ink-800 font-sans antialiased;
-  background-image:
-    radial-gradient(circle at 10% 0%, rgba(248, 48, 48, 0.08), transparent 40%),
-    radial-gradient(circle at 90% 10%, rgba(12, 15, 20, 0.06), transparent 45%);
+  background-color: #16130b;
+  color: #eae1d4;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.blade {
-  background: linear-gradient(135deg, #f83030 0%, #b80d0d 100%);
+/* Grain overlay on all primary surfaces */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
-@keyframes drip {
-  0% { transform: translateY(-4px); opacity: 0; }
-  40% { opacity: 1; }
-  100% { transform: translateY(6px); opacity: 0; }
+/* Caution-tape stripe utility */
+.caution-tape {
+  background: repeating-linear-gradient(
+    -45deg,
+    #f2c94c 0px,
+    #f2c94c 12px,
+    #000 12px,
+    #000 24px
+  );
 }
 
-.animate-drip {
-  animation: drip 2.4s ease-in-out infinite;
+/* Hard stamp button press effect */
+.btn-stamp {
+  transition: box-shadow 80ms ease, transform 80ms ease;
+}
+.btn-stamp:active {
+  box-shadow: 1px 1px 0px 0px #000 !important;
+  transform: translate(3px, 3px);
+}
+
+/* Case-file tab shape on cards */
+.case-file::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 60px;
+  height: 4px;
+  background: #f2c94c;
+  border-radius: 0 0 0 0;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.25s ease-out both; }
+
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+.scanline::after {
+  content: '';
+  position: absolute;
+  inset-x: 0;
+  height: 2px;
+  background: rgba(242, 201, 76, 0.06);
+  animation: scanline 4s linear infinite;
+  pointer-events: none;
 }
 
-.fade-in {
-  animation: fadeIn 0.35s ease-out both;
+/* Typewriter cursor on inputs */
+input, textarea, select {
+  caret-color: #f2c94c;
 }
+
+/* Noir input style */
+.noir-input {
+  background: #16130b;
+  border: 1px solid #4d4635;
+  color: #eae1d4;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 100ms;
+}
+.noir-input::placeholder { color: #4d4635; }
+.noir-input:focus { border-color: #2d9cdb; }
+.noir-input option { background: #1f1b13; color: #eae1d4; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #16130b; }
+::-webkit-scrollbar-thumb { background: #4d4635; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #99907b; }

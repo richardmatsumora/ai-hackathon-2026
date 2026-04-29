@@ -44,30 +44,49 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-full">
-      <header className="sticky top-0 z-20 backdrop-blur bg-bone/80 border-b border-ink-100">
+    <div className="min-h-full" style={{ background: '#16130b' }}>
+      {/* Header */}
+      <header
+        className="sticky top-0 z-20"
+        style={{ background: '#110e07', borderBottom: '1px solid #4d4635' }}
+      >
+        {/* Caution-tape top strip */}
+        <div className="h-1.5 caution-tape" style={{ opacity: 0.7 }} />
+
         <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
           <Logo />
-          <nav className="flex items-center gap-1 bg-white rounded-lg p-1 border border-ink-100 shadow-soft">
+
+          {/* Tabs */}
+          <nav className="flex items-center" style={{ border: '1px solid #4d4635' }}>
             <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>
-              Calendar
+              CALENDAR
             </TabBtn>
+            <div style={{ width: 1, background: '#4d4635', alignSelf: 'stretch' }} />
             <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>
-              Impact
+              IMPACT
             </TabBtn>
           </nav>
+
+          {/* CTA */}
           <button
             onClick={() => openInterceptor('')}
-            className="inline-flex items-center gap-2 rounded-lg bg-blood-600 hover:bg-blood-700 text-white text-sm font-medium px-3 py-2"
+            className="btn-stamp inline-flex items-center gap-2 font-display font-black text-sm px-4 py-2.5"
+            style={{
+              background: '#eb5757',
+              color: '#000',
+              border: '2px solid #000',
+              boxShadow: '4px 4px 0px #000',
+              letterSpacing: '-0.01em',
+            }}
           >
-            <Skull className="w-4 h-4" /> Kill a meeting
+            <Skull className="w-4 h-4" strokeWidth={3} /> KILL A MEETING
           </button>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-5 py-6">
         {tab === 'calendar' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
             <Calendar onNew={() => openInterceptor('Untitled meeting')} />
             <SidePanel kpis={kpis} onCreate={() => openInterceptor('')} />
           </div>
@@ -88,9 +107,7 @@ export default function App() {
                 ? rec.recommendedAttendees.length
                 : draft.attendees.length;
             const duration =
-              accepted && (rec.verdict === 'kill' || rec.verdict === 'async')
-                ? 0
-                : accepted
+              accepted && rec.verdict !== 'kill' && rec.verdict !== 'async'
                 ? rec.recommendedDuration
                 : draft.duration;
 
@@ -119,13 +136,11 @@ export default function App() {
               .maybeSingle();
 
             if (!error && data) {
-              // synthesise feedback for meetings that survived, to power MPS
               if (rec.verdict === 'keep' && accepted) {
-                const score = 9;
                 await supabase.from('feedback').insert({
                   meeting_id: (data as MeetingRow).id,
                   session_id: sessionId,
-                  score,
+                  score: 9,
                 });
               } else if (rec.verdict === 'kill' && !accepted) {
                 await supabase.from('feedback').insert({
@@ -145,65 +160,83 @@ export default function App() {
   );
 }
 
-function TabBtn({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+function TabBtn({ active, onClick, children }: {
+  active: boolean; onClick: () => void; children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`text-sm font-medium px-3 py-1.5 rounded-md transition ${
-        active ? 'bg-ink-800 text-white' : 'text-ink-500 hover:text-ink-800'
-      }`}
+      className="font-sans font-medium text-xs tracking-[0.18em] px-5 py-2.5 transition"
+      style={{
+        color: active ? '#000' : '#99907b',
+        background: active ? '#f2c94c' : 'transparent',
+        borderBottom: active ? '2px solid #000' : '2px solid transparent',
+      }}
     >
       {children}
     </button>
   );
 }
 
-function SidePanel({
-  kpis,
-  onCreate,
-}: {
+function SidePanel({ kpis, onCreate }: {
   kpis: { avoided: number; attendeeHoursSaved: number; costSaved: number };
   onCreate: () => void;
 }) {
   return (
     <aside className="space-y-4">
-      <div className="rounded-2xl blade text-white p-5 shadow-soft relative overflow-hidden">
-        <div className="absolute -right-6 -bottom-6 opacity-10">
-          <Skull className="w-32 h-32" />
+      {/* Manifesto card */}
+      <div
+        className="relative overflow-hidden px-5 py-5"
+        style={{
+          background: '#1f1b13',
+          border: '2px solid #4d4635',
+          boxShadow: '4px 4px 0px #000',
+        }}
+      >
+        {/* Yellow tab */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: 56, height: 3, background: '#f2c94c' }} />
+        {/* Background skull watermark */}
+        <div className="absolute -right-4 -bottom-4 opacity-[0.04]">
+          <Skull className="w-28 h-28" style={{ color: '#eae1d4' }} />
         </div>
-        <div className="text-[11px] uppercase tracking-[0.2em] opacity-80">Manifesto</div>
-        <div className="font-display text-xl mt-1 leading-snug">
-          Every meeting is guilty<br /> until proven useful.
+
+        <div className="font-sans text-[10px] tracking-[0.22em] uppercase mt-1" style={{ color: '#4d4635' }}>
+          Manifesto
         </div>
-        <p className="text-sm opacity-90 mt-3">
-          We intercept before it hits calendars, ask two questions, and kill, trim, or approve.
+        <div className="font-display font-black text-xl mt-2 leading-tight" style={{ color: '#eae1d4', letterSpacing: '-0.03em' }}>
+          Every meeting is guilty until proven useful.
+        </div>
+        <p className="font-sans text-sm mt-3 leading-relaxed" style={{ color: '#99907b' }}>
+          We intercept before it hits calendars, interrogate with two questions, then kill, trim, or approve.
         </p>
         <button
           onClick={onCreate}
-          className="mt-4 w-full rounded-lg bg-white text-blood-700 font-medium text-sm px-3 py-2 hover:bg-blood-50 transition"
+          className="btn-stamp mt-4 w-full font-display font-black text-sm py-2.5"
+          style={{
+            background: '#f2c94c',
+            color: '#000',
+            border: '2px solid #000',
+            boxShadow: '4px 4px 0px #000',
+            letterSpacing: '-0.01em',
+          }}
         >
-          Try it now
+          INTERROGATE A MEETING
         </button>
       </div>
 
-      <div className="rounded-2xl bg-white border border-ink-100 p-5 shadow-soft">
-        <div className="text-xs uppercase tracking-[0.18em] text-ink-400">This session</div>
-        <div className="mt-3 space-y-2 text-sm">
-          <Row label="Meetings avoided" value={String(kpis.avoided)} />
-          <Row label="Hours saved" value={kpis.attendeeHoursSaved.toFixed(1)} />
-          <Row
+      {/* Session stats */}
+      <div style={{ background: '#1f1b13', border: '1px solid #4d4635' }}>
+        <div className="px-4 py-2.5 font-sans font-medium text-[10px] tracking-[0.18em] uppercase"
+          style={{ borderBottom: '1px solid #4d4635', color: '#4d4635', background: '#231f17' }}>
+          This session
+        </div>
+        <div className="divide-y" style={{ borderColor: '#2d2a21' }}>
+          <StatRow label="Meetings avoided" value={String(kpis.avoided)} accent="#eb5757" />
+          <StatRow label="Hours saved" value={kpis.attendeeHoursSaved.toFixed(1)} accent="#f2c94c" />
+          <StatRow
             label="Cost saved"
-            value={
-              kpis.costSaved >= 1000 ? `£${(kpis.costSaved / 1000).toFixed(1)}k` : `£${Math.round(kpis.costSaved)}`
-            }
+            value={kpis.costSaved >= 1000 ? `£${(kpis.costSaved / 1000).toFixed(1)}k` : `£${Math.round(kpis.costSaved)}`}
+            accent="#2d9cdb"
           />
         </div>
       </div>
@@ -211,11 +244,11 @@ function SidePanel({
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function StatRow({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="text-ink-500">{label}</div>
-      <div className="font-display text-ink-900">{value}</div>
+    <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid #2d2a21' }}>
+      <div className="font-sans text-sm" style={{ color: '#99907b' }}>{label}</div>
+      <div className="font-display font-black text-lg" style={{ color: accent, letterSpacing: '-0.02em' }}>{value}</div>
     </div>
   );
 }

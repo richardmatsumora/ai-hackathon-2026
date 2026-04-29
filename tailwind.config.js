@@ -4,38 +4,63 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'Inter', 'sans-serif'],
+        sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        display: ['Inter', '"Space Grotesk"', 'sans-serif'],
       },
       colors: {
-        ink: {
-          50: '#f6f7f8',
-          100: '#e9ebed',
-          200: '#c9ced3',
-          300: '#9aa2ac',
-          400: '#6a7380',
-          500: '#4a5360',
-          600: '#343b46',
-          700: '#252a33',
-          800: '#171b22',
-          900: '#0c0f14',
+        // Surfaces — "Void" scale from DESIGN.md
+        surface: {
+          DEFAULT: '#16130b',
+          dim:     '#16130b',
+          bright:  '#3d392f',
+          lowest:  '#110e07',
+          low:     '#1f1b13',
+          base:    '#231f17',
+          high:    '#2d2a21',
+          highest: '#39342b',
         },
-        blood: {
-          50: '#fff1f1',
-          100: '#ffdede',
-          200: '#ffc1c1',
-          300: '#ff9494',
-          400: '#ff5b5b',
-          500: '#f83030',
-          600: '#e01414',
-          700: '#b80d0d',
-          800: '#8f0a0a',
-          900: '#5e0707',
+        on: {
+          surface:         '#eae1d4',
+          'surface-muted': '#d0c5af',
         },
-        bone: '#f4efe6',
+        outline: {
+          DEFAULT: '#99907b',
+          subtle:  '#4d4635',
+        },
+        // Caution Yellow — primary CTA / crime-scene tape
+        yellow: {
+          DEFAULT: '#f2c94c',
+          dim:     '#ebc246',
+          dark:    '#6b5400',
+          on:      '#3d2f00',
+        },
+        // Forensic Blue — data / metadata
+        blue: {
+          DEFAULT: '#2d9cdb',
+          light:   '#8ccdff',
+          on:      '#002d44',
+        },
+        // Blood Red — destructive / killed meetings
+        red: {
+          DEFAULT: '#eb5757',
+          dim:     '#ffb4ab',
+          dark:    '#93000a',
+          on:      '#690005',
+        },
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.08)',
+        // Hard-drop stamp shadows — no blur
+        stamp:   '4px 4px 0px 0px #000000',
+        'stamp-y': '4px 4px 0px 0px #f2c94c',
+        'stamp-r': '4px 4px 0px 0px #eb5757',
+        soft:    '0 1px 12px rgba(0,0,0,0.5)',
+      },
+      borderWidth: {
+        DEFAULT: '1px',
+        '2': '2px',
+      },
+      backgroundImage: {
+        'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E\")",
       },
     },
   },
