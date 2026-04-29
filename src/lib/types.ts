@@ -48,4 +48,6 @@ export type MeetingRow = {
   avg_hourly_rate: number;
   accepted: boolean;
   created_at: string;
+  source?: string;
+  external_id?: string | null;
 };

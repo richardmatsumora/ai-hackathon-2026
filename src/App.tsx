@@ -6,7 +6,15 @@ import { Logo } from './components/Logo';
 import { getSessionId, supabase } from './lib/supabase';
 import type { Attendee, MeetingRow } from './lib/types';
 import { computeKpis } from './lib/kpi';
-import { ChevronDown, Skull } from 'lucide-react';
+import { CalendarDays, ChevronDown, Loader as Loader2, Skull } from 'lucide-react';
+import {
+  beginOAuth,
+  consumeOAuthRedirect,
+  disconnect as gcalDisconnect,
+  hasGoogleClientId,
+  importGoogleCalendarEvents,
+  isConnected as gcalIsConnected,
+} from './lib/google';
 
 type EditPayload = { title: string; duration: number; attendees: Attendee[] };
 type Tab = 'calendar' | 'dashboard';
@@ -49,7 +57,59 @@ export default function App() {
     setAllFeedback((af as { score: number }[]) || []);
   }
 
-  useEffect(() => { loadData(); }, []);
+  const [gcalConnected, setGcalConnected] = useState<boolean>(gcalIsConnected());
+  const [gcalBusy, setGcalBusy] = useState(false);
+
+  useEffect(() => {
+    const cb = consumeOAuthRedirect();
+    if (cb.kind === 'error') {
+      flash('err', `Google sign-in failed: ${cb.message}`);
+    }
+    (async () => {
+      await loadData();
+      if (cb.kind === 'success') {
+        setGcalConnected(true);
+        await runImport();
+      }
+    })();
+  }, []);
+
+  async function runImport() {
+    setGcalBusy(true);
+    try {
+      const { imported, total } = await importGoogleCalendarEvents(sessionId);
+      await loadData();
+      flash('ok', imported > 0
+        ? `Imported ${imported} Google Calendar event${imported === 1 ? '' : 's'}.`
+        : total === 0 ? 'No upcoming Google Calendar events found.' : 'Calendar already up to date.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Import failed';
+      flash('err', msg);
+      if (/expired|reconnect/i.test(msg)) setGcalConnected(false);
+    } finally {
+      setGcalBusy(false);
+    }
+  }
+
+  function handleGcalClick() {
+    if (!hasGoogleClientId()) {
+      flash('err', 'Add VITE_GOOGLE_CLIENT_ID to .env to enable Google Calendar sync.');
+      return;
+    }
+    if (gcalConnected) {
+      runImport();
+    } else {
+      try { beginOAuth(); } catch (e: unknown) {
+        flash('err', e instanceof Error ? e.message : 'OAuth start failed');
+      }
+    }
+  }
+
+  function handleGcalDisconnect() {
+    gcalDisconnect();
+    setGcalConnected(false);
+    flash('ok', 'Disconnected from Google Calendar.');
+  }
 
   // Session KPIs: only what the user did this session (for sidebar)
   const sessionKpis = computeKpis(rows, sessionFeedback);
@@ -88,11 +148,19 @@ export default function App() {
         <div className="h-1.5 caution-tape" style={{ opacity: 0.7 }} />
         <div className="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
           <Logo />
-          <nav className="flex items-center" style={{ border: '1px solid #4d4635' }}>
-            <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>CALENDAR</TabBtn>
-            <div style={{ width: 1, background: '#4d4635', alignSelf: 'stretch' }} />
-            <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>IMPACT</TabBtn>
-          </nav>
+          <div className="flex items-center gap-3">
+            <GCalButton
+              connected={gcalConnected}
+              busy={gcalBusy}
+              onClick={handleGcalClick}
+              onDisconnect={handleGcalDisconnect}
+            />
+            <nav className="flex items-center" style={{ border: '1px solid #4d4635' }}>
+              <TabBtn active={tab === 'calendar'} onClick={() => setTab('calendar')}>CALENDAR</TabBtn>
+              <div style={{ width: 1, background: '#4d4635', alignSelf: 'stretch' }} />
+              <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')}>IMPACT</TabBtn>
+            </nav>
+          </div>
           <KillMeetingPicker
             savedRows={rows.filter((r) => !(r.accepted && (r.verdict === 'kill' || r.verdict === 'async')))}
             onPickRow={openInterceptorForRow}
@@ -334,6 +402,59 @@ function PickerRow({ title, sub, onClick }: { title: string; sub: string; onClic
         <div className="font-sans text-[11px] mt-0.5 truncate" style={{ color: '#99907b' }}>{sub}</div>
       </div>
     </button>
+  );
+}
+
+function GCalButton({
+  connected,
+  busy,
+  onClick,
+  onDisconnect,
+}: {
+  connected: boolean;
+  busy: boolean;
+  onClick: () => void;
+  onDisconnect: () => void;
+}) {
+  const accent = connected ? '#4caf7d' : '#2d9cdb';
+  const label = busy
+    ? 'SYNCING…'
+    : connected
+    ? 'SYNC GOOGLE CALENDAR'
+    : 'CONNECT GOOGLE CALENDAR';
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <button
+        onClick={onClick}
+        disabled={busy}
+        className="btn-stamp inline-flex items-center gap-2 font-display font-black text-xs px-3.5 py-2.5"
+        style={{
+          background: accent,
+          color: '#000',
+          border: '2px solid #000',
+          boxShadow: '3px 3px 0px #000',
+          letterSpacing: '0.02em',
+          opacity: busy ? 0.7 : 1,
+        }}
+      >
+        {busy ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={3} />
+        ) : (
+          <CalendarDays className="w-3.5 h-3.5" strokeWidth={3} />
+        )}
+        {label}
+      </button>
+      {connected && !busy && (
+        <button
+          onClick={onDisconnect}
+          className="font-sans font-medium text-[10px] tracking-[0.15em] uppercase px-2 py-1"
+          style={{ color: '#99907b', border: '1px solid #4d4635', background: 'transparent' }}
+          title="Disconnect Google Calendar"
+        >
+          ×
+        </button>
+      )}
+    </div>
   );
 }
 
