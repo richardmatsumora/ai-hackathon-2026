@@ -24,7 +24,13 @@ export default function App() {
   const [allRows, setAllRows] = useState<MeetingRow[]>([]);
   const [sessionFeedback, setSessionFeedback] = useState<{ score: number }[]>([]);
   const [allFeedback, setAllFeedback] = useState<{ score: number }[]>([]);
+  const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null);
   const sessionId = getSessionId();
+
+  function flash(kind: 'ok' | 'err', msg: string) {
+    setToast({ kind, msg });
+    setTimeout(() => setToast(null), 3200);
+  }
 
   async function loadData() {
     const [{ data: sessionMeetings }, { data: demoMeetings }, { data: sf }, { data: af }] =
@@ -113,6 +119,21 @@ export default function App() {
         )}
       </main>
 
+      {toast && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] font-sans font-medium text-sm px-4 py-2.5 fade-in"
+          style={{
+            background: toast.kind === 'err' ? '#1a0a0a' : '#0a1a0e',
+            color: toast.kind === 'err' ? '#eb5757' : '#4caf7d',
+            border: `1px solid ${toast.kind === 'err' ? '#eb5757' : '#4caf7d'}`,
+            boxShadow: '4px 4px 0 #000',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {toast.msg}
+        </div>
+      )}
+
       {showInterceptor && (
         <Interceptor
           initialTitle={initialTitle}
@@ -130,42 +151,64 @@ export default function App() {
                 ? rec.recommendedDuration
                 : draft.duration;
 
-            const { data, error } = await supabase
-              .from('meetings')
-              .insert({
-                session_id: sessionId,
-                title: draft.title,
-                goal: answers.goal,
-                outcome: answers.outcome,
-                verdict: rec.verdict,
-                async_alternative: rec.asyncAlternative,
-                owner: rec.owner,
-                agenda: rec.agenda,
-                attendees_proposed: draft.attendees.length,
-                attendees_recommended: attendeesRec,
-                duration_minutes: duration,
-                avg_hourly_rate: 100,
-                accepted,
-              })
-              .select()
-              .maybeSingle();
+            const payload = {
+              session_id: sessionId,
+              title: draft.title,
+              goal: answers.goal,
+              outcome: answers.outcome,
+              verdict: rec.verdict,
+              async_alternative: rec.asyncAlternative,
+              owner: rec.owner,
+              agenda: rec.agenda,
+              attendees_proposed: draft.attendees.length,
+              attendees_recommended: attendeesRec,
+              duration_minutes: duration,
+              avg_hourly_rate: 100,
+              accepted,
+            };
 
-            if (!error && data) {
-              if (rec.verdict === 'keep' && accepted) {
-                await supabase.from('feedback').insert({ meeting_id: (data as MeetingRow).id, session_id: sessionId, score: 9 });
-              } else if (rec.verdict === 'kill' && !accepted) {
-                await supabase.from('feedback').insert({ meeting_id: (data as MeetingRow).id, session_id: sessionId, score: 4 });
-              }
-            }
+            // Optimistic row so the UI updates the instant the modal closes —
+            // even before the round-trip completes. Reconciled by loadData()
+            // once the insert returns.
+            const tempId = `temp-${crypto.randomUUID()}`;
+            const optimistic: MeetingRow = {
+              id: tempId,
+              created_at: new Date().toISOString(),
+              ...payload,
+            } as MeetingRow;
+            setRows((prev) => [optimistic, ...prev]);
+            setAllRows((prev) => [optimistic, ...prev]);
             setShowInterceptor(false);
-            await loadData();
-            // Stay on the calendar so the user can see their new event. Only
-            // jump to Impact when the meeting was killed outright (no event
-            // created, so there's nothing to see on the calendar).
+
             const wasKilled =
               accepted && (rec.verdict === 'kill' || rec.verdict === 'async');
             if (wasKilled) setTab('dashboard');
             else setTab('calendar');
+
+            const { data, error } = await supabase
+              .from('meetings')
+              .insert(payload)
+              .select()
+              .maybeSingle();
+
+            if (error || !data) {
+              // Roll back the optimistic row and tell the user.
+              setRows((prev) => prev.filter((r) => r.id !== tempId));
+              setAllRows((prev) => prev.filter((r) => r.id !== tempId));
+              flash('err', `Could not save meeting: ${error?.message ?? 'unknown error'}`);
+              return;
+            }
+
+            const saved = data as MeetingRow;
+            if (rec.verdict === 'keep' && accepted) {
+              await supabase.from('feedback').insert({ meeting_id: saved.id, session_id: sessionId, score: 9 });
+            } else if (rec.verdict === 'kill' && !accepted) {
+              await supabase.from('feedback').insert({ meeting_id: saved.id, session_id: sessionId, score: 4 });
+            }
+
+            // Reconcile with the real server state (replaces the optimistic row).
+            await loadData();
+            flash('ok', wasKilled ? 'Meeting killed — case filed.' : 'Meeting filed to your calendar.');
           }}
         />
       )}
