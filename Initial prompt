@@ -1,50 +1,85 @@
-Create a meeting optimiser. Suggest where this could live, for example as a Chrome extension so it works with Google Calendar, or as a standalone site, and also integrated with Slack.
+Create a meeting optimiser product called “Meet is Murder”.
 
-These are the KPIs we want to track for our app.
+First, recommend the best implementation approach:
 
-Final KPI Set
+* Chrome extension for Google Calendar (primary)
+* Slack integration
+* Optional standalone web app
+    Explain trade-offs briefly and pick one as the primary.
+
+⸻
+
+Core problem
+
+Tackle meeting overload by intervening at the moment a meeting is being created.
+
+Help teams:
+
+* Decide if a meeting is actually needed
+* Identify who should attend (and who should not)
+* Replace meetings with async alternatives where possible
+
+⸻
+
+Key failure modes to solve
+
+* No clear outcome
+* People don’t know why they are invited
+* No clear owner
+* Missing context
+* Too many attendees
+* Meetings that should have been async
+
+⸻
+
+Core user flow
+
+When a user creates a meeting in their calendar:
+
+1. The tool intercepts before the meeting is finalised
+2. It asks a small number of questions (voice or text):
+    * What is the goal? (decision, update, brainstorm, other)
+    * What outcome is required?
+3. Based on answers, the tool:
+    * Suggests whether the meeting is needed at all
+    * Recommends an async alternative if appropriate
+    * Suggests required attendees (and flags unnecessary ones)
+    * Assigns a clear owner
+    * Generates a short agenda
+
+Keep this flow fast, opinionated, and low-friction.
+
+⸻
+
+Product requirements
+
+* Simple, lightweight UI (overlay or modal)
+* Playful tone aligned to the name “Meet is Murder”
+* Must actively change behaviour, not just suggest
+* Default towards reducing or replacing meetings
+
+⸻
+
+KPIs to track
 
 1. Unnecessary Meetings Avoided
-    Core behaviour change
-    X meetings avoided
-2. Time Saved
-    Primary value driver
-    Y attendee-hours saved
+2. Time Saved (attendee-hours)
 3. Meeting Quality (Meeting Promoter Score)
-    Ensures you’re not just deleting meetings
-    Z +42
-4. Cost Saved (role-gated / premium insight)
-    Converts time into money using weighted salaries
-    £X,000 saved
-5. ESG Impact
-    Derived benefit
+4. Cost Saved (role-gated, based on weighted salaries)
+5. ESG Impact:
+    * CO₂e avoided
+    * Energy (kWh) saved
+    * Tree-equivalent (annual absorption)
 
-* A kg CO₂e avoided
-* B kWh saved
-* C trees (annual equivalent)
+⸻
 
-Problems to solve:
+Output required
 
-Tackle meeting overload. Help teams decide whether a meeting is actually needed, who should be there, and what could have been handled asynchronously.
+Provide:
 
-Key issues:
-
-* Not knowing the outcome
-* People not knowing why they are there
-* No clear owner of the outcome
-* Missing context
-
-Flow:
-
-A user is about to create a new meeting in their calendar app. As they do so, the tool we are building appears and asks them a few questions. Input can be via voice (using AI) or text.
-
-The tool should:
-
-* Suggest who should attend based on previous history
-* Ask the user to define an outcome
-* Generate suggested topics and an agenda
-* Check whether all invited attendees are necessary
-
-The UI should be simple.
-
-The name is “Meet is Murder”. We are trying to reduce meetings, so include a playful element in the experience.
+1. Product concept overview
+2. Recommended architecture (where it lives)
+3. End-to-end user flow
+4. Key UI screens (described clearly)
+5. KPI tracking logic (how each metric is calculated)
+6. A short demo script showing the product in action
