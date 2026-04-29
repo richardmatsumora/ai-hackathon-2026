@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { Interceptor } from './components/Interceptor';
 import { Logo } from './components/Logo';
 import { getSessionId, supabase } from './lib/supabase';
-import type { MeetingRow } from './lib/types';
+import type { Attendee, MeetingRow } from './lib/types';
 import { computeKpis } from './lib/kpi';
 import { Skull } from 'lucide-react';
 
@@ -14,6 +14,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('calendar');
   const [showInterceptor, setShowInterceptor] = useState(false);
   const [initialTitle, setInitialTitle] = useState('');
+  const [prefillAttendees, setPrefillAttendees] = useState<Attendee[] | undefined>(undefined);
   const [rows, setRows] = useState<MeetingRow[]>([]);
   const [feedback, setFeedback] = useState<{ score: number }[]>([]);
   const sessionId = getSessionId();
@@ -40,6 +41,22 @@ export default function App() {
 
   function openInterceptor(suggestedTitle = '') {
     setInitialTitle(suggestedTitle);
+    setPrefillAttendees(undefined);
+    setShowInterceptor(true);
+  }
+
+  function openInterceptorForRow(row: MeetingRow) {
+    setInitialTitle(row.title);
+    // Reconstruct minimal attendees from the row so the interceptor has something to work with
+    const count = row.attendees_proposed;
+    const synthetic: Attendee[] = Array.from({ length: count }, (_, i) => ({
+      name: `Attendee ${i + 1}`,
+      role: 'Team member',
+      rate: Number(row.avg_hourly_rate) || 100,
+      essential: false,
+      reason: '',
+    }));
+    setPrefillAttendees(synthetic);
     setShowInterceptor(true);
   }
 
@@ -87,7 +104,11 @@ export default function App() {
       <main className="max-w-6xl mx-auto px-5 py-6">
         {tab === 'calendar' ? (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
-            <Calendar onNew={() => openInterceptor('Untitled meeting')} />
+            <Calendar
+              onNew={() => openInterceptor('Untitled meeting')}
+              rows={rows}
+              onEditRow={openInterceptorForRow}
+            />
             <SidePanel kpis={kpis} onCreate={() => openInterceptor('')} />
           </div>
         ) : (
@@ -98,6 +119,7 @@ export default function App() {
       {showInterceptor && (
         <Interceptor
           initialTitle={initialTitle}
+          initialAttendees={prefillAttendees}
           onClose={() => setShowInterceptor(false)}
           onCommit={async ({ draft, answers, rec, accepted }) => {
             const attendeesRec =

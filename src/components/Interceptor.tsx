@@ -7,6 +7,7 @@ import { Logo } from './Logo';
 
 type Props = {
   initialTitle: string;
+  initialAttendees?: Attendee[];
   onClose: () => void;
   onCommit: (payload: {
     draft: MeetingDraft;
@@ -23,7 +24,7 @@ const ROLE_SUGGESTIONS = [
   'Sales Lead', 'Operations Manager',
 ];
 
-export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
+export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit }: Props) {
   const [step, setStep] = useState<'brief' | 'questions' | 'verdict'>('brief');
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(45);
@@ -34,7 +35,7 @@ export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
   });
   const [time, setTime] = useState('10:00');
   const [location, setLocation] = useState('');
-  const [selected, setSelected] = useState<Attendee[]>([]);
+  const [selected, setSelected] = useState<Attendee[]>(initialAttendees ?? []);
   const [goal, setGoal] = useState<Goal>('decision');
   const [outcome, setOutcome] = useState('');
   const [saving, setSaving] = useState(false);
