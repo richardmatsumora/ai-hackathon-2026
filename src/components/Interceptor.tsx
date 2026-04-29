@@ -42,7 +42,6 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
 
   const [addName, setAddName] = useState('');
   const [addRole, setAddRole] = useState('');
-  const [addRate, setAddRate] = useState('');
   const [showRoleSuggestions, setShowRoleSuggestions] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -60,9 +59,9 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
     if (selected.find((s) => s.name.toLowerCase() === name.toLowerCase())) return;
     setSelected((prev) => [
       ...prev,
-      { name, role, rate: Number(addRate) || 100, essential: false, reason: '' },
+      { name, role, rate: 100, essential: false, reason: '' },
     ]);
-    setAddName(''); setAddRole(''); setAddRate('');
+    setAddName(''); setAddRole('');
     setShowRoleSuggestions(false);
     nameRef.current?.focus();
   }
@@ -167,7 +166,6 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
                           <span className="font-sans text-xs ml-2" style={{ color: '#99907b' }}>{a.role}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="font-sans text-xs" style={{ color: '#4d4635' }}>£{a.rate}/hr</span>
                           <button onClick={() => removeAttendee(a.name)} className="transition" style={{ color: '#4d4635' }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = '#eb5757')}
                             onMouseLeave={(e) => (e.currentTarget.style.color = '#4d4635')}
@@ -183,7 +181,7 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
                 {/* Add form */}
                 <div style={{ border: '1px dashed #4d4635', padding: '12px' }}>
                   <div className="font-sans text-[10px] tracking-[0.18em] uppercase mb-2" style={{ color: '#4d4635' }}>Add suspect</div>
-                  <div className="grid grid-cols-[1fr_1fr_72px_36px] gap-2 items-start">
+                  <div className="grid grid-cols-[1fr_1fr_36px] gap-2 items-start">
                     <input ref={nameRef} value={addName} onChange={(e) => setAddName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
                       className="noir-input" placeholder="Full name" />
@@ -208,9 +206,6 @@ export function Interceptor({ initialTitle, initialAttendees, onClose, onCommit 
                         </div>
                       )}
                     </div>
-                    <input value={addRate} onChange={(e) => setAddRate(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
-                      className="noir-input" placeholder="£/hr" type="number" min="0" />
                     <button onClick={addAttendee} disabled={!addName.trim() || !addRole.trim()}
                       className="btn-stamp h-[34px] w-[36px] flex items-center justify-center font-display font-black transition"
                       style={{
