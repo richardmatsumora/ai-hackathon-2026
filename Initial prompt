@@ -1,0 +1,50 @@
+Create a meeting optimiser. Suggest where this could live, for example as a Chrome extension so it works with Google Calendar, or as a standalone site, and also integrated with Slack.
+
+These are the KPIs we want to track for our app.
+
+Final KPI Set
+
+1. Unnecessary Meetings Avoided
+    Core behaviour change
+    X meetings avoided
+2. Time Saved
+    Primary value driver
+    Y attendee-hours saved
+3. Meeting Quality (Meeting Promoter Score)
+    Ensures you’re not just deleting meetings
+    Z +42
+4. Cost Saved (role-gated / premium insight)
+    Converts time into money using weighted salaries
+    £X,000 saved
+5. ESG Impact
+    Derived benefit
+
+* A kg CO₂e avoided
+* B kWh saved
+* C trees (annual equivalent)
+
+Problems to solve:
+
+Tackle meeting overload. Help teams decide whether a meeting is actually needed, who should be there, and what could have been handled asynchronously.
+
+Key issues:
+
+* Not knowing the outcome
+* People not knowing why they are there
+* No clear owner of the outcome
+* Missing context
+
+Flow:
+
+A user is about to create a new meeting in their calendar app. As they do so, the tool we are building appears and asks them a few questions. Input can be via voice (using AI) or text.
+
+The tool should:
+
+* Suggest who should attend based on previous history
+* Ask the user to define an outcome
+* Generate suggested topics and an agenda
+* Check whether all invited attendees are necessary
+
+The UI should be simple.
+
+The name is “Meet is Murder”. We are trying to reduce meetings, so include a playful element in the experience.
