@@ -1,5 +1,17 @@
-import { useMemo, useState } from 'react';
-import { CircleAlert as AlertCircle, ArrowRight, Check, Clock, Skull, Sparkles, Users, X, Zap } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import {
+  CircleAlert as AlertCircle,
+  ArrowRight,
+  Check,
+  Clock,
+  Plus,
+  Skull,
+  Sparkles,
+  Trash2,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react';
 import type { Attendee, Goal, MeetingDraft, Recommendation, Verdict } from '../lib/types';
 import { recommend } from '../lib/recommend';
 import { TEAM } from '../lib/seed';
@@ -16,22 +28,67 @@ type Props = {
   }) => Promise<void>;
 };
 
+const ROLE_SUGGESTIONS = [
+  'VP Product', 'Engineering Lead', 'Senior PM', 'Staff Engineer',
+  'Product Designer', 'Data Analyst', 'Customer Success', 'Marketing Manager',
+  'Frontend Engineer', 'QA Engineer', 'CEO', 'CTO', 'Head of Design',
+  'Sales Lead', 'Operations Manager',
+];
+
 export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
   const [step, setStep] = useState<'brief' | 'questions' | 'verdict'>('brief');
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(45);
-  const [selected, setSelected] = useState<Attendee[]>(TEAM.slice(0, 7));
+  const [date, setDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [time, setTime] = useState('10:00');
+  const [location, setLocation] = useState('');
+  const [selected, setSelected] = useState<Attendee[]>(TEAM.slice(0, 0));
   const [goal, setGoal] = useState<Goal>('decision');
   const [outcome, setOutcome] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Add-attendee form state
+  const [addName, setAddName] = useState('');
+  const [addRole, setAddRole] = useState('');
+  const [addRate, setAddRate] = useState('');
+  const [showRoleSuggestions, setShowRoleSuggestions] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
   const draft: MeetingDraft = { title, duration, attendees: selected };
   const rec = useMemo(() => recommend(draft, { goal, outcome }), [draft, goal, outcome]);
 
-  function toggleAttendee(a: Attendee) {
-    setSelected((prev) =>
-      prev.find((p) => p.name === a.name) ? prev.filter((p) => p.name !== a.name) : [...prev, a]
-    );
+  const filteredRoles = addRole.length > 0
+    ? ROLE_SUGGESTIONS.filter((r) => r.toLowerCase().includes(addRole.toLowerCase()) && r !== addRole)
+    : [];
+
+  function addAttendee() {
+    const name = addName.trim();
+    const role = addRole.trim();
+    if (!name || !role) return;
+    if (selected.find((s) => s.name.toLowerCase() === name.toLowerCase())) return;
+    setSelected((prev) => [
+      ...prev,
+      { name, role, rate: Number(addRate) || 100, essential: false, reason: '' },
+    ]);
+    setAddName('');
+    setAddRole('');
+    setAddRate('');
+    setShowRoleSuggestions(false);
+    nameRef.current?.focus();
+  }
+
+  function addFromTeam(a: Attendee) {
+    if (!selected.find((s) => s.name === a.name)) {
+      setSelected((prev) => [...prev, { ...a }]);
+    }
+  }
+
+  function removeAttendee(name: string) {
+    setSelected((prev) => prev.filter((a) => a.name !== name));
   }
 
   async function commit(accepted: boolean) {
@@ -42,6 +99,8 @@ export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
       setSaving(false);
     }
   }
+
+  const unaddedTeam = TEAM.filter((t) => !selected.find((s) => s.name === t.name));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/60 backdrop-blur-sm">
@@ -59,6 +118,7 @@ export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
               icon={<Skull className="w-4 h-4" />}
               text="Before we put this in anyone's calendar, let's make sure it deserves to exist."
             />
+
             <Field label="Meeting title">
               <input
                 value={title}
@@ -67,44 +127,149 @@ export function Interceptor({ initialTitle, onClose, onCommit }: Props) {
                 placeholder="e.g. Q3 roadmap sync"
               />
             </Field>
+
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Proposed duration">
+              <Field label="Date">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-lg border border-ink-200 px-3 py-2.5 focus:border-ink-800 focus:outline-none"
+                />
+              </Field>
+              <Field label="Time">
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full rounded-lg border border-ink-200 px-3 py-2.5 focus:border-ink-800 focus:outline-none"
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Duration">
                 <select
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
                   className="w-full rounded-lg border border-ink-200 px-3 py-2.5 focus:border-ink-800 focus:outline-none"
                 >
-                  {[15, 30, 45, 60, 90].map((d) => (
-                    <option key={d} value={d}>
-                      {d} min
-                    </option>
+                  {[15, 30, 45, 60, 90, 120].map((d) => (
+                    <option key={d} value={d}>{d} min</option>
                   ))}
                 </select>
               </Field>
-              <Field label="Attendees">
-                <div className="text-sm text-ink-500 py-2.5">{selected.length} selected</div>
+              <Field label="Location / link">
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full rounded-lg border border-ink-200 px-3 py-2.5 focus:border-ink-800 focus:outline-none"
+                  placeholder="Zoom, room, Google Meet…"
+                />
               </Field>
             </div>
-            <Field label="Who's coming">
-              <div className="flex flex-wrap gap-2">
-                {TEAM.map((a) => {
-                  const active = !!selected.find((s) => s.name === a.name);
-                  return (
+
+            {/* Attendee builder */}
+            <Field label={`Attendees${selected.length > 0 ? ` (${selected.length})` : ''}`}>
+              <div className="space-y-3">
+                {/* Current attendees */}
+                {selected.length > 0 && (
+                  <div className="rounded-lg border border-ink-100 divide-y divide-ink-100">
+                    {selected.map((a) => (
+                      <div key={a.name} className="flex items-center justify-between px-3 py-2">
+                        <div>
+                          <span className="text-sm font-medium text-ink-800">{a.name}</span>
+                          <span className="text-xs text-ink-400 ml-2">{a.role}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-ink-400">£{a.rate}/hr</span>
+                          <button
+                            onClick={() => removeAttendee(a.name)}
+                            className="text-ink-300 hover:text-blood-600 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new attendee row */}
+                <div className="rounded-lg border border-dashed border-ink-200 p-3 space-y-2">
+                  <div className="text-xs uppercase tracking-[0.12em] text-ink-400">Add attendee</div>
+                  <div className="grid grid-cols-[1fr_1fr_80px_36px] gap-2 items-start">
+                    <input
+                      ref={nameRef}
+                      value={addName}
+                      onChange={(e) => setAddName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
+                      className="rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-ink-800 focus:outline-none"
+                      placeholder="Full name"
+                    />
+                    <div className="relative">
+                      <input
+                        value={addRole}
+                        onChange={(e) => { setAddRole(e.target.value); setShowRoleSuggestions(true); }}
+                        onFocus={() => setShowRoleSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowRoleSuggestions(false), 120)}
+                        onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
+                        className="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-ink-800 focus:outline-none"
+                        placeholder="Role"
+                      />
+                      {showRoleSuggestions && filteredRoles.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-ink-100 rounded-lg shadow-soft z-20 max-h-40 overflow-y-auto">
+                          {filteredRoles.map((r) => (
+                            <button
+                              key={r}
+                              onMouseDown={() => { setAddRole(r); setShowRoleSuggestions(false); }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-ink-50"
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      value={addRate}
+                      onChange={(e) => setAddRate(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addAttendee()}
+                      className="rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-ink-800 focus:outline-none"
+                      placeholder="£/hr"
+                      type="number"
+                      min="0"
+                    />
                     <button
-                      key={a.name}
-                      onClick={() => toggleAttendee(a)}
-                      className={`text-xs px-3 py-1.5 rounded-full border transition ${
-                        active
-                          ? 'bg-ink-800 text-white border-ink-800'
-                          : 'bg-white text-ink-600 border-ink-200 hover:border-ink-400'
-                      }`}
+                      onClick={addAttendee}
+                      disabled={!addName.trim() || !addRole.trim()}
+                      className="h-[38px] w-[36px] flex items-center justify-center rounded-md bg-ink-800 disabled:bg-ink-200 text-white transition"
                     >
-                      {a.name} <span className="opacity-60">· {a.role}</span>
+                      <Plus className="w-4 h-4" />
                     </button>
-                  );
-                })}
+                  </div>
+                </div>
+
+                {/* Suggestions from the sample team */}
+                {unaddedTeam.length > 0 && (
+                  <div>
+                    <div className="text-xs text-ink-400 mb-1.5">Quick-add from your team</div>
+                    <div className="flex flex-wrap gap-2">
+                      {unaddedTeam.map((a) => (
+                        <button
+                          key={a.name}
+                          onClick={() => addFromTeam(a)}
+                          className="text-xs px-3 py-1.5 rounded-full border border-ink-200 hover:border-ink-500 text-ink-600 hover:text-ink-800 transition"
+                        >
+                          + {a.name} <span className="opacity-50">· {a.role}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </Field>
+
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={onClose} className="px-4 py-2 text-sm text-ink-500 hover:text-ink-800">
                 Cancel
@@ -301,7 +466,7 @@ function Verdict({
           Back
         </button>
         <div className="flex gap-2">
-          {(rec.verdict === 'kill' || rec.verdict === 'async') ? (
+          {rec.verdict === 'kill' || rec.verdict === 'async' ? (
             <>
               <button
                 onClick={onOverride}
