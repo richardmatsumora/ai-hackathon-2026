@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bone text-ink-800 font-sans antialiased;
+  background-image:
+    radial-gradient(circle at 10% 0%, rgba(248, 48, 48, 0.08), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(12, 15, 20, 0.06), transparent 45%);
+}
+
+.blade {
+  background: linear-gradient(135deg, #f83030 0%, #b80d0d 100%);
+}
+
+@keyframes drip {
+  0% { transform: translateY(-4px); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(6px); opacity: 0; }
+}
+
+.animate-drip {
+  animation: drip 2.4s ease-in-out infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease-out both;
+}
